@@ -1,0 +1,177 @@
+[
+  {
+    "id": "3ccbea8d-b13d-4e9e-a3eb-6f4b8035b4e5",
+    "name": "Sector 192.168.0",
+    "subnet": "192.168.0",
+    "difficulty": 1,
+    "devices": [
+      {
+        "id": "619d28e6-02a9-4494-a823-10d4956297b5",
+        "ip": "192.168.0.11",
+        "hostname": "WORKSTATION-1",
+        "type": "PC",
+        "os": "Windows 10",
+        "isOnline": true,
+        "isHacked": true,
+        "password": "L9PPXT",
+        "ports": [
+          {
+            "port": 22,
+            "service": "ssh",
+            "isOpen": true
+          },
+          {
+            "port": 80,
+            "service": "http",
+            "isOpen": true
+          }
+        ],
+        "files": [
+          {
+            "name": "salary.csv",
+            "content": "[BINARY LOCK ACTIVE] - 010101... (Use decipher)",
+            "originalContent": "John: 5000\nAlice: 6000\nBob: 200",
+            "encryption": "XOR",
+            "encryptionKey": 0
+          },
+          {
+            "name": "secure_frag_1.enc",
+            "content": "GATEWAY KEY FRAGMENT: \"N4\"",
+            "originalContent": "GATEWAY KEY FRAGMENT: \"N4\"",
+            "encryption": "NONE",
+            "encryptionKey": "QJYASBLRPFWNHMUCZETVKIXDGO"
+          }
+        ]
+      },
+      {
+        "id": "2a1e7174-c41b-47a3-8ac0-766331bacb39",
+        "ip": "192.168.0.12",
+        "hostname": "WORKSTATION-2",
+        "type": "PC",
+        "os": "Windows 10",
+        "isOnline": true,
+        "isHacked": true,
+        "password": "OWQSQK",
+        "ports": [
+          {
+            "port": 22,
+            "service": "ssh",
+            "isOpen": true
+          },
+          {
+            "port": 80,
+            "service": "http",
+            "isOpen": true
+          }
+        ],
+        "files": [
+          {
+            "name": "salary.csv",
+            "content": "John: 5000\nAlice: 6000\nBob: 200",
+            "originalContent": "John: 5000\nAlice: 6000\nBob: 200",
+            "encryption": "NONE",
+            "encryptionKey": 4
+          },
+          {
+            "name": "secure_frag_2.enc",
+            "content": "ABWNCBG FNG ZRBAENXW: \"68\"",
+            "originalContent": "GATEWAY KEY FRAGMENT: \"68\"",
+            "encryption": "SUBSTITUTION",
+            "encryptionKey": "BKYMNZATSHFIEXDVPROWQJCUGL"
+          }
+        ]
+      },
+      {
+        "id": "433a5120-0561-43ae-9fde-0a3406749292",
+        "ip": "192.168.0.13",
+        "hostname": "WORKSTATION-3",
+        "type": "PC",
+        "os": "Windows 10",
+        "isOnline": true,
+        "isHacked": false,
+        "password": "P2TMA5",
+        "ports": [
+          {
+            "port": 22,
+            "service": "ssh",
+            "isOpen": true
+          },
+          {
+            "port": 80,
+            "service": "http",
+            "isOpen": true
+          }
+        ],
+        "files": [
+          {
+            "name": "todo.txt",
+            "content": "1. Buy milk\n2. Fix server\n3. Call Mom",
+            "originalContent": "1. Buy milk\n2. Fix server\n3. Call Mom",
+            "encryption": "NONE"
+          },
+          {
+            "name": "secure_frag_3.enc",
+            "content": "MJZDFJP BDP LUJMGDKZ: \"HB\"",
+            "originalContent": "GATEWAY KEY FRAGMENT: \"XK\"",
+            "encryption": "SUBSTITUTION",
+            "encryptionKey": "JEOQDLMCVTBXGKIRAUYZSWFHPN"
+          }
+        ]
+      },
+      {
+        "id": "7bf108db-bdc6-40c7-abdd-f0de3c3e9f62",
+        "ip": "192.168.0.14",
+        "hostname": "WORKSTATION-4",
+        "type": "PC",
+        "os": "Windows 10",
+        "isOnline": true,
+        "isHacked": false,
+        "password": "46IR7B",
+        "ports": [
+          {
+            "port": 22,
+            "service": "ssh",
+            "isOpen": true
+          },
+          {
+            "port": 80,
+            "service": "http",
+            "isOpen": true
+          }
+        ],
+        "files": [
+          {
+            "name": "project_x.log",
+            "content": "Prototype failed. Adjusting voltage.",
+            "originalContent": "Prototype failed. Adjusting voltage.",
+            "encryption": "NONE"
+          }
+        ]
+      },
+      {
+        "id": "6bd649df-fd3c-4c51-b67b-5ccf018efa03",
+        "ip": "192.168.0.1",
+        "hostname": "GATEWAY-ROUTER",
+        "type": "ROUTER",
+        "os": "Cisco IOS",
+        "isOnline": true,
+        "isHacked": false,
+        "password": "N4-68-XK",
+        "ports": [
+          {
+            "port": 80,
+            "service": "http",
+            "isOpen": true
+          },
+          {
+            "port": 443,
+            "service": "admin-panel",
+            "isOpen": true
+          }
+        ],
+        "files": []
+      }
+    ],
+    "routerGatewayIp": "192.168.0.1"
+  }
+]

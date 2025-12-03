@@ -1,0 +1,20 @@
+{
+"compilerOptions": {
+    /* Основные опции */
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Настройка путей */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* Настройка модулей */
+    "moduleResolution": "node",
+    "types": ["node"]
+  },
+  "include": ["src"] // Явно указываем, где находится наш код
+}
