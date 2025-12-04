@@ -15,6 +15,7 @@ export class GameSession {
   public playerDevice: IDevice; 
   private cmdProcessor: CommandProcessor;
   private isRunning: boolean = false;
+  private currentLevelDifficulty: number = 1;
 
   constructor(networks: INetwork[], playerDevice?: IDevice) {
     this.networks = networks;
@@ -34,20 +35,52 @@ export class GameSession {
         files: []
     };
   }
+// === ПЕРЕХОД НА СЛЕДУЮЩИЙ УРОВЕНЬ ===
+  async nextLevel() {
+      this.currentLevelDifficulty++;
+      
+      // Генерируем новый IP подсети (просто +10 к третьему октету)
+      // Было 192.168.10 -> станет 192.168.20
+      const nextSubnetIp = `192.168.${this.currentLevelDifficulty * 10}`;
+      
+      // Увеличиваем кол-во ПК с каждым уровнем (сложность растет)
+      const minPcs = 2 + this.currentLevelDifficulty; // Ур 2 -> мин 3 ПК
+      const maxPcs = 3 + this.currentLevelDifficulty; // Ур 2 -> макс 4 ПК
 
-  // === ОБЫЧНАЯ ИГРА (БЕЗ ТУТОРИАЛА) ===
-  static async createNewGame(): Promise<GameSession> {
-    // Генерируем случайную сеть (сложность 1)
-    const startNet = WorldGenerator.generateSubnet('10.0.0', 1);
+      const newNetwork = WorldGenerator.generateSubnet(
+          nextSubnetIp, 
+          this.currentLevelDifficulty, 
+          minPcs, 
+          maxPcs
+      );
+
+      // Добавляем в список сетей
+      this.networks.push(newNetwork);
+      this.currentNetwork = newNetwork;
+      
+      // Отключаемся от старого роутера
+      this.connectedDevice = null;
+
+      await new Promise(r => setTimeout(r, 1000));
+      console.clear();
+      
+      // Приветствие нового уровня
+      const header = `=== ENTERING SECTOR ${nextSubnetIp} [LEVEL ${this.currentLevelDifficulty}] ===`;
+      await ConsoleUI.print(header, 'cyan');
+      await ConsoleUI.print(`Security Level: ${this.currentLevelDifficulty}`, 'yellow');
+      await ConsoleUI.print('Scanning for nearby nodes...', 'gray');
+      
+      // Автоматически делаем скан для удобства
+      await this.cmdProcessor.process('scan', this);
+  }
+static async createNewGame(): Promise<GameSession> {
+    // УРОВЕНЬ 1: Генерируем сеть с 2-3 ПК
+    const startNet = WorldGenerator.generateSubnet('192.168.10', 1, 2, 3);
     const session = new GameSession([startNet]);
     
-    // Принудительно отключаем туториал, если он был включен
-    // (нужно добавить метод stop() в TutorialManager или просто не запускать его)
-    // В TutorialManager добавь метод static stop() { this.isActive = false; }
-    TutorialManager.stop(); 
-    
+    TutorialManager.stop();
     console.clear();
-    await ConsoleUI.print('System initialized. Random world generated.', 'green');
+    await ConsoleUI.print('System initialized. Connection established to Sector 192.168.10.', 'green');
     return session;
   }
 

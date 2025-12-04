@@ -1,7 +1,7 @@
 import { GameSession } from './GameSession';
 import { ConsoleUI } from '../ui/ConsoleUI';
 import { ICommand } from './commands/ICommand';
-import { ScanCommand, ConnectCommand, DisconnectCommand } from './commands/NetworkCommands';
+import { ScanCommand, ConnectCommand, DisconnectCommand, TunnelCommand } from './commands/NetworkCommands';
 import { LsCommand, CatCommand, DecryptCommand, DownloadCommand } from './commands/FileCommands';
 import chalk from 'chalk';
 
@@ -17,6 +17,7 @@ export class CommandProcessor {
       new ScanCommand(),
       new ConnectCommand(),
       new DisconnectCommand(),
+      new TunnelCommand(),
       new LsCommand(),
       new CatCommand(),
       new DecryptCommand(),
@@ -57,7 +58,6 @@ export class CommandProcessor {
 
   private showHelp() {
     console.log(chalk.yellow('\n=== AVAILABLE COMMANDS ==='));
-    // Выводим только уникальные команды (без алиасов для красоты)
     const uniqueCmds = new Set<ICommand>(this.commands.values());
     
     uniqueCmds.forEach(cmd => {

@@ -108,28 +108,27 @@ export class ConsoleUI {
    return result;
  }
 
-  // === МИНИ-ИГРА: ЦЕЗАРЬ ===
-  static async interactiveCaesarHack(encryptedText: string): Promise<boolean> {
+ // === ОБНОВЛЕННАЯ МИНИ-ИГРА: ВОЗВРАЩАЕТ СДВИГ ===
+  // Возвращает number (сдвиг), если подтвердили, или null, если отменили
+  static async interactiveCaesarHack(encryptedText: string): Promise<number | null> {
     this.closeRawMode(); 
 
     let shift = 0;
     let playing = true;
     let confirmed = false;
 
-    // Обрезаем длинный текст
     const previewText = encryptedText.length > 30 
         ? encryptedText.substring(0, 30) + '...' 
         : encryptedText;
 
-    process.stdout.write('\x1B[?25l'); // Скрыть курсор
+    process.stdout.write('\x1B[?25l'); 
     console.log(chalk.yellow('\n=== CAESAR DECRYPTION TOOL ==='));
-    console.log(chalk.gray('LEFT/RIGHT - Сдвиг | ENTER - Подтвердить'));
+    console.log(chalk.gray('LEFT/RIGHT - Сдвиг | ENTER - Подтвердить выбор'));
     console.log(chalk.gray('------------------------------------------------'));
 
     const render = () => {
       const decrypted = CipherMechanics.caesarDecrypt(previewText, shift);
-      // \r и \x1b[K нужны, чтобы обновлять одну строку
-      const output = `[SHIFT: ${chalk.cyan(shift.toString().padStart(2, '0'))}] Result: ${chalk.green(decrypted)}`;
+      const output = `[SHIFT: ${chalk.cyan(shift.toString().padStart(2, '0'))}] Preview: ${chalk.green(decrypted)}`;
       process.stdout.write('\r' + output + '\x1b[K');
     };
 
@@ -138,7 +137,7 @@ export class ConsoleUI {
     process.stdin.setRawMode(true);
     process.stdin.resume();
 
-    return new Promise<boolean>((resolve) => {
+    return new Promise<number | null>((resolve) => {
       const handler = (ch: any, key: any) => {
         if (!key) return;
         
@@ -154,6 +153,7 @@ export class ConsoleUI {
           confirmed = true;
         } else if (key.ctrl && key.name === 'c') {
           playing = false;
+          confirmed = false; // Отмена
           process.exit(0);
         }
 
@@ -161,8 +161,10 @@ export class ConsoleUI {
           process.stdin.setRawMode(false);
           process.stdin.removeListener('keypress', handler);
           process.stdout.write('\n');
-          process.stdout.write('\x1B[?25h'); // Вернуть курсор
-          resolve(confirmed);
+          process.stdout.write('\x1B[?25h');
+          
+          // Возвращаем сдвиг, если подтвердили, иначе null
+          resolve(confirmed ? shift : null);
         }
       };
       process.stdin.on('keypress', handler);

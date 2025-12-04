@@ -2,6 +2,7 @@ import { ICommand } from './ICommand';
 import { GameSession } from '../GameSession';
 import { ConsoleUI } from '../../ui/ConsoleUI';
 import chalk from 'chalk';
+import { CipherMechanics } from '../../mechanics/CipherMechanics';
 
 export class LsCommand implements ICommand {
   name = 'ls';
@@ -156,52 +157,42 @@ export class DecryptCommand implements ICommand {
 
     // === ЛОГИКА ВЗЛОМА ===
     if (file.encryption === 'CAESAR') {
-       const result = await ConsoleUI.interactiveCaesarHack(file.content);
-       if (result) success = true;
+       const selectedShift = await ConsoleUI.interactiveCaesarHack(file.content);
+       
+       if (selectedShift !== null) {
+           const attempt = CipherMechanics.caesarDecrypt(file.content, selectedShift);
+           if (attempt === file.originalContent) {
+               success = true;
+           } else {
+               await ConsoleUI.print(`\nError: Decryption failed. Integrity check mismatch.`, 'red');
+               await ConsoleUI.print(`Resulting data is corrupt. Wrong key used.`, 'gray');
+           }
+       } else {
+           await ConsoleUI.print('\nOperation cancelled.', 'yellow');
+       }
     } 
     else if (file.encryption === 'SUBSTITUTION') {
+        // Оставляем это для других файлов, но фрагменты теперь будут XOR
         await ConsoleUI.animateSubstitutionCrack(file.content, file.originalContent);
         success = true;
     }
     else if (file.encryption === 'XOR') {
-        // Запускаем мини-игру XOR
+        // Здесь запустится мини-игра с битами
         success = await ConsoleUI.interactiveXorHack();
     }
 
     // === ЕСЛИ ВЗЛОМ УСПЕШЕН ===
-   if (success) {
-        // 1. Расшифровываем файл на удаленном ПК
+    if (success) {
         file.content = file.originalContent;
-        // Используем 'as const' или приведение к типу, чтобы TS не ругался
-        file.encryption = 'NONE' as const; 
+        file.encryption = 'NONE' as const;
         
         await ConsoleUI.print('\nDecryption successful. File readable.', 'green');
 
-        // 2. ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ ЭТО ФРАГМЕНТОМ КЛЮЧА
+        // ИЗМЕНЕНИЕ: Убрали авто-скачивание. Теперь только подсказка.
         if (file.content.includes('FRAGMENT') || file.content.includes('KEY')) {
             await ConsoleUI.print('>>> IMPORTANT DATA FOUND <<<', 'cyan');
-            await ConsoleUI.print('Downloading to local storage...', 'cyan', 20);
-            
-            // Создаем копию файла для локального ПК
-            const localFile = {
-                ...file,
-                name: `downloaded_${file.name}`,
-                // ВАЖНО: Добавляем 'as const', чтобы зафиксировать тип
-                encryption: 'NONE' as const 
-            };
-
-            // Проверка на дубликаты
-            const alreadyExists = session.playerDevice.files.find(f => f.name === localFile.name);
-            if (!alreadyExists) {
-                // Теперь TypeScript поймет, что localFile соответствует IFile
-                session.playerDevice.files.push(localFile); 
-                await ConsoleUI.print(`File saved to ${session.playerDevice.hostname}:/home/guest/${localFile.name}`, 'green');
-            } else {
-                await ConsoleUI.print('File already exists in local storage.', 'gray');
-            }
+            await ConsoleUI.print(`Hint: Use 'download ${file.name}' to save this fragment to your deck.`, 'gray');
         }
-    } else {
-        await ConsoleUI.print('Decryption failed or cancelled.', 'red');
     }
   }
 }
