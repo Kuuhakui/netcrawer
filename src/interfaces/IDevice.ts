@@ -20,4 +20,8 @@ export interface IDevice {
   
   // Для Роутера
   connectedSubnetId?: string; // ID подсети, куда ведет этот роутер
+  
+  isActiveTarget?: boolean; // Является ли целью для прослушки (Уровень 2+)
+  sshKeyFragments?: string[]; // Фрагменты ключа (если isActiveTarget)
+  isSniffed?: boolean; // Был ли уже прослушан игроком
 }

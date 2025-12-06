@@ -14,18 +14,73 @@ export class ScanCommand implements ICommand {
       return;
     }
     await ConsoleUI.print('Scanning network...', 'blue', 10);
-    
-    console.log(chalk.white('------------------------------------------------'));
+    console.log(chalk.white('-----------------------------------------------------------'));
     console.log(chalk.bold('IP ADDRESS      HOSTNAME           TYPE       STATUS'));
-    console.log(chalk.white('------------------------------------------------'));
+    console.log(chalk.white('-----------------------------------------------------------'));
     
     for (const dev of session.currentNetwork.devices) {
-        const status = dev.isHacked ? chalk.green('PWNED') : chalk.red('SECURE');
-        // Добавим отображение типа, чтобы видеть кто Router, а кто PC
+        let status = dev.isHacked ? chalk.green('PWNED') : chalk.red('SECURE');
+        
+        // Добавляем пометку ACTIVE для целей 2 уровня
+        if (dev.isActiveTarget && !dev.isHacked) {
+            status += chalk.yellow(' [ACTIVE]');
+        }
+        
         console.log(`${chalk.cyan(dev.ip.padEnd(15))} ${dev.hostname.padEnd(18)} ${dev.type.padEnd(10)} [${status}]`);
     }
-    console.log(chalk.white('------------------------------------------------'));
+    console.log(chalk.white('-----------------------------------------------------------'));
   }
+}
+
+export class SniffCommand implements ICommand {
+    name = 'sniff';
+    description = 'Начать пассивный перехват SSH пакетов (Только для ACTIVE целей)';
+
+    async execute(args: string[], session: GameSession): Promise<void> {
+        const ip = args[0];
+        if (!ip) {
+            await ConsoleUI.print('Usage: sniff <ip>', 'yellow');
+            return;
+        }
+
+        // Проверка: уже слушаем этот IP?
+        if (session.activeSniffTargetIp === ip) {
+            await ConsoleUI.print('Error: Sniffer already active on this target.', 'yellow');
+            return;
+        }
+
+        // Проверка: слушаем кого-то другого?
+        if (session.activeSniffTargetIp !== null) {
+            await ConsoleUI.print(`Error: Sniffer busy targeting ${session.activeSniffTargetIp}. Only one stream allowed.`, 'red');
+            return;
+        }
+
+        const target = session.currentNetwork.devices.find(d => d.ip === ip);
+        if (!target) {
+            await ConsoleUI.print('Host not found.', 'red');
+            return;
+        }
+
+        if (!target.isActiveTarget) {
+            await ConsoleUI.print('Error: Target does not emit active SSH traffic. Sniffing useless.', 'gray');
+            return;
+        }
+        
+        if (target.isSniffed) {
+             await ConsoleUI.print('Error: Traffic from this node has already been captured.', 'yellow');
+             return;
+        }
+
+        await ConsoleUI.print(`Initializing passive tap on ${ip}...`, 'cyan');
+        await ConsoleUI.print('Listening for handshake packets (approx 10s interval)...', 'gray');
+        await ConsoleUI.print('You can continue using terminal commands.', 'green');
+        
+        // Помечаем, что начали слушать (чтобы нельзя было повторно)
+        target.isSniffed = true;
+        
+        // Запуск процесса в сессии
+        session.startSniffing(ip, target.sshKeyFragments || []);
+    }
 }
 
 export class ConnectCommand implements ICommand {
@@ -50,6 +105,33 @@ export class ConnectCommand implements ICommand {
       session.connectedDevice = target;
       await ConsoleUI.print(`Access granted to ${target.hostname}.`, 'green');
       return;
+    }
+
+    // === ЛОГИКА АКТИВНЫХ ЦЕЛЕЙ (SSH СБОРКА) ===
+    if (target.isActiveTarget) {
+        // Проверяем, собрали ли мы все фрагменты
+        const collected = session.collectedFragments.get(ip);
+        const totalNeeded = target.sshKeyFragments?.length || 0;
+
+        if (!collected || collected.length < totalNeeded) {
+            await ConsoleUI.print(`Access Denied. SSH Key required.`, 'red');
+            await ConsoleUI.print(`Sniffed fragments: ${collected?.length || 0}/${totalNeeded}. Use 'sniff' command first.`, 'yellow');
+            return;
+        }
+
+        // Запускаем мини-игру по сборке ключа
+        await ConsoleUI.print('Initiating Key Reconstruction Protocol...', 'blue');
+        // Передаем ОРИГИНАЛЬНЫЕ фрагменты для проверки
+        const success = await ConsoleUI.interactiveKeyAssembly(target.sshKeyFragments || []);
+
+        if (success) {
+            target.isHacked = true;
+            session.connectedDevice = target;
+            await ConsoleUI.print('Authentication Successful. Welcome.', 'green');
+        } else {
+             await ConsoleUI.print('Connection Terminated by Host.', 'red');
+        }
+        return;
     }
 
     // === ЛОГИКА АВТО-ВЗЛОМА РОУТЕРА ===

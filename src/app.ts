@@ -57,8 +57,7 @@ export async function startApp() {
           }
           break;
 
-        case '4': // Settings
-          // Вызываем наш новый менеджер настроек
+        case '4':
           await SettingsManager.openSettingsMenu();
           break;
 

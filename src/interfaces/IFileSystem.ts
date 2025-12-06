@@ -1,9 +1,9 @@
-export type EncryptionType = 'NONE' | 'CAESAR' | 'XOR' | 'SUBSTITUTION';
+export type EncryptionType = 'NONE' | 'CAESAR' | 'XOR' | 'VIGENERE' | 'SUBSTITUTION';
 
 export interface IFile {
   name: string;
-  content: string; // Здесь лежит текст (зашифрованный или открытый)
-  originalContent: string; // Оригинал для восстановления после взлома
+  content: string;
+  originalContent: string; // Контент после расшифровки
   encryption: EncryptionType;
-  encryptionKey?: number | string; // Ключ (смещение для Цезаря, байт для XOR и т.д.)
+  encryptionKey?: number | string; // Может быть числом (Цезарь) или строкой (Виженер)
 }

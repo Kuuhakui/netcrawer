@@ -176,6 +176,12 @@ export class DecryptCommand implements ICommand {
         await ConsoleUI.animateSubstitutionCrack(file.content, file.originalContent);
         success = true;
     }
+    else if (file.encryption === 'VIGENERE') {
+        // Запускаем новую мини-игру
+        // В file.encryptionKey должен лежать правильный ключ (строка)
+        const key = file.encryptionKey as string; 
+        success = await ConsoleUI.interactiveVigenereHack(file.content, key);
+    }
     else if (file.encryption === 'XOR') {
         // Здесь запустится мини-игра с битами
         success = await ConsoleUI.interactiveXorHack();

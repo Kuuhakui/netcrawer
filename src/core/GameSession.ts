@@ -16,6 +16,11 @@ export class GameSession {
   private cmdProcessor: CommandProcessor;
   private isRunning: boolean = false;
   private currentLevelDifficulty: number = 1;
+  // === SNIFFER STATE ===
+  public activeSniffTargetIp: string | null = null;
+  private sniffInterval: NodeJS.Timeout | null = null;
+  public collectedFragments: Map<string, string[]> = new Map(); // IP -> [фрагменты]
+
 
   constructor(networks: INetwork[], playerDevice?: IDevice) {
     this.networks = networks;
@@ -35,6 +40,51 @@ export class GameSession {
         files: []
     };
   }
+
+  startSniffing(targetIp: string, fragments: string[]) {
+      if (this.sniffInterval) {
+          clearInterval(this.sniffInterval);
+      }
+      
+      this.activeSniffTargetIp = targetIp;
+      this.collectedFragments.set(targetIp, []); // Сброс собранного для этого IP
+      
+      let index = 0;
+      
+      // Запускаем таймер (раз в 10 секунд)
+      this.sniffInterval = setInterval(async () => {
+          if (index >= fragments.length) {
+              await ConsoleUI.printAsyncLog(chalk.green(`\n[SNIFFER] Capture complete for ${targetIp}. All packets intercepted.`));
+              this.stopSniffing();
+              return;
+          }
+
+          const frag = fragments[index];
+          // Сохраняем фрагмент в инвентарь (мы его как бы "услышали")
+          const currentCollection = this.collectedFragments.get(targetIp) || [];
+          currentCollection.push(frag);
+          this.collectedFragments.set(targetIp, currentCollection);
+
+          // Вывод в консоль "пассивно"
+          await ConsoleUI.printAsyncLog(chalk.cyan(`\n[SNIFFER] Intercepted packet from ${targetIp}: "${frag.substring(0, 10)}..."`));
+          
+          index++;
+      }, 10000); // 10 секунд
+  }
+
+  stopSniffing() {
+      if (this.sniffInterval) {
+          clearInterval(this.sniffInterval);
+          this.sniffInterval = null;
+          this.activeSniffTargetIp = null;
+      }
+  }
+
+  // При завершении игры или уровня нужно чистить таймер
+  cleanup() {
+      this.stopSniffing();
+  }
+
 // === ПЕРЕХОД НА СЛЕДУЮЩИЙ УРОВЕНЬ ===
   async nextLevel() {
       this.currentLevelDifficulty++;
@@ -114,9 +164,7 @@ static async createNewGame(): Promise<GameSession> {
       const user = this.connectedDevice ? 'root' : 'guest';
       const host = this.connectedDevice ? this.connectedDevice.hostname : this.playerDevice.hostname;
       const path = '~';
-      
       const promptStr = `${chalk.green(user)}@${chalk.blue(host)}:${chalk.yellow(path)}$ `;
-      
       const input = await ConsoleUI.promptShell(promptStr);
       
       if (!input) continue;
@@ -127,8 +175,6 @@ static async createNewGame(): Promise<GameSession> {
       }
 
       await this.cmdProcessor.process(input, this);
-      
-      // Проверяем туториал (он сам проверит isActive внутри)
       await TutorialManager.checkProgress(input.split(' ')[0], '');
     }
     

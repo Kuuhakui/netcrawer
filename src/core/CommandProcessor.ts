@@ -1,7 +1,7 @@
 import { GameSession } from './GameSession';
 import { ConsoleUI } from '../ui/ConsoleUI';
 import { ICommand } from './commands/ICommand';
-import { ScanCommand, ConnectCommand, DisconnectCommand, TunnelCommand } from './commands/NetworkCommands';
+import { ScanCommand, ConnectCommand, DisconnectCommand, TunnelCommand, SniffCommand } from './commands/NetworkCommands';
 import { LsCommand, CatCommand, DecryptCommand, DownloadCommand } from './commands/FileCommands';
 import chalk from 'chalk';
 
@@ -22,6 +22,7 @@ export class CommandProcessor {
       new CatCommand(),
       new DecryptCommand(),
       new DownloadCommand(),
+      new SniffCommand(),
     ];
 
     cmdList.forEach(cmd => {

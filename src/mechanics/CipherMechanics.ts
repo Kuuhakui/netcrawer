@@ -15,6 +15,49 @@ export class CipherMechanics {
     }).join('');
   }
 
+static vigenereEncrypt(text: string, key: string): string {
+    let result = '';
+    key = key.toUpperCase();
+    let keyIndex = 0;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char.match(/[a-zA-Z]/)) {
+        const base = char >= 'a' ? 97 : 65;
+        const shift = key.charCodeAt(keyIndex % key.length) - 65;
+        const code = char.charCodeAt(0) - base;
+        
+        result += String.fromCharCode(((code + shift) % 26) + base);
+        keyIndex++;
+      } else {
+        result += char;
+      }
+    }
+    return result;
+  }
+
+  static vigenereDecrypt(text: string, key: string): string {
+    let result = '';
+    key = key.toUpperCase();
+    let keyIndex = 0;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char.match(/[a-zA-Z]/)) {
+        const base = char >= 'a' ? 97 : 65;
+        const shift = key.charCodeAt(keyIndex % key.length) - 65;
+        const code = char.charCodeAt(0) - base;
+        
+        // Обратный сдвиг для дешифровки (+26 чтобы не уйти в минус)
+        result += String.fromCharCode(((code - shift + 26) % 26) + base);
+        keyIndex++;
+      } else {
+        result += char;
+      }
+    }
+    return result;
+  }
+
   static caesarDecrypt(text: string, shift: number): string {
     return this.caesarEncrypt(text, (26 - shift) % 26);
   }
@@ -46,3 +89,4 @@ export class CipherMechanics {
     return { encrypted: result, key: shuffled };
   }
 }
+

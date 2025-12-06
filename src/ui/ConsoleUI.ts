@@ -171,6 +171,126 @@ export class ConsoleUI {
     });
   }
 
+  static async interactiveVigenereHack(encryptedText: string, correctKey: string): Promise<boolean> {
+    this.closeRawMode();
+    const attempts = 3;
+    const decoys = ['SYSTEM', 'ROOT', 'ACCESS', 'SERVER', 'NETWORK'];
+    
+    // Формируем список: Правильный ключ + 3-4 случайных неправильных
+    const options = new Set<string>();
+    options.add(correctKey);
+    while(options.size < 5) {
+        options.add(decoys[Math.floor(Math.random() * decoys.length)]);
+    }
+    const choices = Array.from(options).sort(); // Сортируем по алфавиту
+
+    console.log(chalk.yellow('\n=== VIGENERE DECRYPTION MATRIX ==='));
+    console.log(chalk.gray(`Target Encrypted Block: "${encryptedText.substring(0, 15)}..."`));
+    console.log(chalk.gray('Analyze pattern shifts and select the correct pass-phrase.'));
+
+    for (let i = 0; i < attempts; i++) {
+        const remaining = attempts - i;
+        const choice = await this.selection(`Select Key Candidate (${remaining} attempts left):`, choices);
+        
+        const selectedKey = choice.replace('[ ', '').replace(' ]', '');
+
+        // АНИМАЦИЯ СМЕЩЕНИЯ
+        process.stdout.write(chalk.cyan('Applying shift algorithm... '));
+        for(let k=0; k<10; k++) {
+            process.stdout.write('.');
+            await new Promise(r => setTimeout(r, 100));
+        }
+        process.stdout.write('\n');
+
+        if (selectedKey === correctKey) {
+            console.log(chalk.green('>>> KEY MATCHED. DECRYPTING STREAM. <<<'));
+            await new Promise(r => setTimeout(r, 800));
+            return true;
+        } else {
+            console.log(chalk.red('>>> INVALID KEY. OUTPUT IS GARBAGE. <<<'));
+            // Можно показать "мусор", который получился
+            const garbage = CipherMechanics.vigenereDecrypt(encryptedText.substring(0, 10), selectedKey);
+            console.log(chalk.gray(`Result: ${garbage}...`));
+        }
+    }
+    
+    console.log(chalk.red('LOCKDOWN INITIATED. DECRYPTION FAILED.'));
+    return false;
+  }
+
+  // === МИНИ-ИГРА: СБОРКА SSH КЛЮЧА ===
+  static async interactiveKeyAssembly(fragments: string[]): Promise<boolean> {
+    this.closeRawMode();
+    
+    // Правильный порядок - это исходный массив fragments
+    // Создаем копию и перемешиваем её для игрока
+    let currentOrder = [...fragments].sort(() => Math.random() - 0.5);
+    const attempts = 2;
+
+    console.log(chalk.yellow('\n=== SSH KEY RECONSTRUCTION ==='));
+    console.log(chalk.gray('Arrange the captured packets in the correct order to form a valid key.'));
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+        console.log(chalk.cyan(`\nAttempt ${attempt + 1}/${attempts}`));
+        
+        // Используем inquirer для сортировки (выбора порядка)
+        // В inquirer нет встроенного "drag and drop", поэтому сделаем пошаговый выбор
+        // Или упростим: Пользователь должен ввести номера фрагментов в правильном порядке (1 3 2 4)
+        
+        currentOrder.forEach((frag, idx) => {
+            console.log(`${chalk.yellow(idx + 1)}: ${frag}`);
+        });
+
+        const { input } = await inquirer.prompt([{
+            type: 'input',
+            name: 'input',
+            message: 'Enter sequence (e.g. "3 1 4 2"):',
+            validate: val => /^[1-4\s]+$/.test(val) ? true : 'Invalid format'
+        }]);
+
+        const indices = input.trim().split(/\s+/).map((n: string) => parseInt(n) - 1);
+        
+        // Проверка длины
+        if (indices.length !== fragments.length) {
+            console.log(chalk.red('Error: You must use all fragments.'));
+            continue;
+        }
+
+        // Проверка правильности
+        let isCorrect = true;
+        const assembled = [];
+        
+        for(let i=0; i<indices.length; i++) {
+            const chosenFragment = currentOrder[indices[i]];
+            assembled.push(chosenFragment);
+            
+            if (chosenFragment !== fragments[i]) {
+                isCorrect = false;
+            }
+        }
+
+        if (isCorrect) {
+            console.log(chalk.green('>>> SIGNATURE VERIFIED. AUTHENTICATED. <<<'));
+            return true;
+        } else {
+            console.log(chalk.red('>>> CHECKSUM FAILED. KEY INVALID. <<<'));
+            
+            // ПОДСКАЗКА: Показываем, какие части совпали
+            let hint = 'Structure Analysis: ';
+            for(let i=0; i<assembled.length; i++) {
+                if (assembled[i] === fragments[i]) {
+                    hint += chalk.green('[OK] ');
+                } else {
+                    hint += chalk.red('[ERR] ');
+                }
+            }
+            console.log(hint);
+        }
+    }
+
+    return false;
+  }
+
   // === МИНИ-ИГРА: XOR ===
   static async interactiveXorHack(): Promise<boolean> {
     this.closeRawMode(); 
@@ -238,6 +358,15 @@ export class ConsoleUI {
 
       process.stdout.write('\r' + chalk.green(original.substring(0, 50)) + '...   [MATCH FOUND]\n');
       process.stdout.write('\x1B[?25h');
+  }
+
+  static async printAsyncLog(text: string) {
+      // Очищаем текущую строку, пишем лог, переносим строку
+      process.stdout.write('\r\x1b[K'); 
+      console.log(text);
+      // Восстанавливаем промпт (это сложно сделать идеально без глобального состояния промпта)
+      // Поэтому просто оставим как лог. Игрок нажмет Enter и увидит промпт снова.
+      process.stdout.write(chalk.gray('> ')); 
   }
 
   static close() {
