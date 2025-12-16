@@ -156,30 +156,79 @@ export class WorldGenerator {
   // Для туториала
   static generateTutorialNetwork(): INetwork {
     const devices: IDevice[] = [];
-    const secretContent = "TUTORIAL COMPLETE. PASSWORD: ADMIN";
-    const encryptedContent = CipherMechanics.caesarEncrypt(secretContent, 1);
+    
+    // 1. Создаем файлы для обучения
+    // Файл 1: ЦЕЗАРЬ (Просто)
+    const caesarContent = "SECURITY BREACH CONFIRMED";
+    const caesarEnc = CipherMechanics.caesarEncrypt(caesarContent, 3);
+    
+    // Файл 2: XOR (Логика)
+    const xorContent = "BINARY PROTOCOL ACTIVATED";
+
+    // Файл 3: ВИЖЕНЕР (Сложно)
+    const vigenereKey = "ALPHA";
+    const vigenereContent = "OPERATION SUCCESSFUL";
+    const vigenereEnc = CipherMechanics.vigenereEncrypt(vigenereContent, vigenereKey);
 
     const targetPC: IDevice = {
         id: uuidv4(),
         ip: '192.168.0.10',
-        hostname: 'TRAINING-TARGET',
+        hostname: 'TRAINING-UNIT',
         type: 'PC',
-        os: 'TestOS',
+        os: 'SimOS v1.0',
         isOnline: true,
-        isHacked: false,
+        isHacked: false, // Мы пустим игрока без взлома пароля для начала, или дадим простой
         password: 'USER',
         ports: [{ port: 22, service: 'ssh', isOpen: true }],
         files: [
-            { name: 'readme.txt', content: 'Welcome.', originalContent: '', encryption: 'NONE' as const },
-            { name: 'secret_data.enc', content: encryptedContent, originalContent: secretContent, encryption: 'CAESAR' as const, encryptionKey: 1 }
+            {
+                name: 'lesson_1_caesar.enc',
+                content: caesarEnc,
+                originalContent: caesarContent,
+                encryption: 'CAESAR' as const,
+                encryptionKey: 3
+            },
+            {
+                name: 'lesson_2_xor.enc',
+                content: '[BINARY BLOB]',
+                originalContent: xorContent,
+                encryption: 'XOR' as const,
+                encryptionKey: 0
+            },
+            {
+                name: 'lesson_3_vigenere.enc',
+                content: vigenereEnc,
+                originalContent: vigenereContent,
+                encryption: 'VIGENERE' as const,
+                encryptionKey: vigenereKey
+            }
         ]
     };
+
     devices.push(targetPC);
+
+    // Роутер (Декорация для туториала)
     devices.push({
-      id: uuidv4(), ip: '192.168.0.1', hostname: 'GATEWAY', type: 'ROUTER', os: 'RouterOS', isOnline: true, isHacked: false, password: 'ADMIN', ports: [], files: []
+      id: uuidv4(),
+      ip: '192.168.0.1',
+      hostname: 'GATEWAY',
+      type: 'ROUTER',
+      os: 'RouterOS',
+      isOnline: true,
+      isHacked: false,
+      password: 'ADMIN',
+      ports: [],
+      files: [],
     });
 
-    return { id: uuidv4(), name: 'Training', subnet: '192.168.0', difficulty: 0, devices, routerGatewayIp: '192.168.0.1' };
+    return {
+        id: uuidv4(),
+        name: 'Simulated Training Environment',
+        subnet: '192.168.0',
+        difficulty: 0,
+        devices: devices,
+        routerGatewayIp: '192.168.0.1'
+    };
   }
 
   private static generateRouterKey(): string {

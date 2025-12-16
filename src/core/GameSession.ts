@@ -175,7 +175,7 @@ static async createNewGame(): Promise<GameSession> {
       }
 
       await this.cmdProcessor.process(input, this);
-      await TutorialManager.checkProgress(input.split(' ')[0], '');
+      await TutorialManager.checkProgress(input.trim(), '');
     }
     
     ConsoleUI.closeRawMode();

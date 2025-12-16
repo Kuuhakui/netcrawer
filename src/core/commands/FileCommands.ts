@@ -193,8 +193,7 @@ export class DecryptCommand implements ICommand {
         file.encryption = 'NONE' as const;
         
         await ConsoleUI.print('\nDecryption successful. File readable.', 'green');
-
-        // ИЗМЕНЕНИЕ: Убрали авто-скачивание. Теперь только подсказка.
+        
         if (file.content.includes('FRAGMENT') || file.content.includes('KEY')) {
             await ConsoleUI.print('>>> IMPORTANT DATA FOUND <<<', 'cyan');
             await ConsoleUI.print(`Hint: Use 'download ${file.name}' to save this fragment to your deck.`, 'gray');
